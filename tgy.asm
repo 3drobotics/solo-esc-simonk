@@ -164,7 +164,7 @@
 .equ	RC_PULS_REVERSE	= 0	; Enable RC-car style forward/reverse throttle
 .equ	RC_CALIBRATION	= 0	; Support run-time calibration of min/max pulse lengths
 .equ	SLOW_THROTTLE	= 0	; Limit maximum throttle jump to try to prevent overcurrent
-.equ	BEACON		= 1	; Beep periodically when RC signal is lost
+.equ	BEACON		= 0	; Beep periodically when RC signal is lost
 .if !defined(CHECK_HARDWARE)
 .equ	CHECK_HARDWARE	= 0	; Check for correct pin configuration, sense inputs, and functioning MOSFETs
 .endif
@@ -1232,67 +1232,6 @@ urxc_exit:	out	SREG, i_sreg
 		reti
 	.endif
 ;-----bko-----------------------------------------------------------------
-; beeper: timer0 is set to 1µs/count
-beep_f1:	ldi	temp2, 80
-		ldi	temp4, 200
-		RED_on
-beep_f1_on:	BpFET_on
-		AnFET_on
-		rcall	beep
-		brne	beep_f1_on
-		RED_off
-		ret
-
-beep_f2:	ldi	temp2, 100
-		ldi	temp4, 180
-		GRN_on
-beep_f2_on:	CpFET_on
-		BnFET_on
-		rcall	beep
-		brne	beep_f2_on
-		GRN_off
-		ret
-
-beep_f3:	ldi	temp2, 120
-		ldi	temp4, 160
-beep_f3_on:	ApFET_on
-		CnFET_on
-		rcall	beep
-		brne	beep_f3_on
-		ret
-
-beep_f4:	ldi	temp2, 140
-beep_f4_freq:	ldi	temp4, 140
-beep_f4_fets:	RED_on
-		GRN_on
-beep_f4_on:	CpFET_on
-		AnFET_on
-		rcall	beep
-		brne	beep_f4_on
-		GRN_off
-		RED_off
-		ret
-
-		; Fall through
-;-----bko-----------------------------------------------------------------
-; Interrupts no longer need to be disabled to beep, but the PWM interrupt
-; must be muted first
-beep:		out	TCNT0, ZH
-beep1:		in	temp1, TCNT0
-		cpi	temp1, 2*CPU_MHZ	; 32µs on
-		brlo	beep1
-		all_nFETs_off temp3
-		all_pFETs_off temp3
-		ldi	temp3, CPU_MHZ
-beep2:		out	TCNT0, ZH
-		wdr
-beep3:		in	temp1, TCNT0
-		cp	temp1, temp4
-		brlo	beep3
-		dec	temp3
-		brne	beep2
-		dec	temp2
-		ret
 
 wait240ms:	rcall	wait120ms
 wait120ms:	rcall	wait60ms
@@ -1613,7 +1552,7 @@ hw_error1:
 		rcall	wait120ms
 		GRN_off
 		.else
-		rcall	beep_f1			; Low frequency is safer
+		rcall	wait30ms		; Low frequency is safer
 		.endif
 		rcall	wait240ms
 		dec	YL
@@ -2570,9 +2509,9 @@ i_rc_puls_rx:	rcall	evaluate_rc_init
 i_rc_puls3:
 		.endif
 
-		rcall	beep_f4			; signal: rcpuls ready
-		rcall	beep_f4
-		rcall	beep_f4
+;		rcall	beep_f4			; signal: rcpuls ready
+;		rcall	beep_f4
+;		rcall	beep_f4
 
 	; Fall through to restart_control
 ;-----bko-----------------------------------------------------------------
@@ -2634,8 +2573,8 @@ wait_for_power_on:
 		brne	wait_for_power_on
 		rcall	switch_power_off	; Brake may have been on
 		rcall	wait30ms
-		rcall	beep_f3			; Play beeps for signal lost, disarming
-		rcall	beep_f2
+;		rcall	beep_f3			; Play beeps for signal lost, disarming
+;		rcall	beep_f2
 		rjmp	control_disarm		; Do not start motor until neutral signal received once again
 wait_for_power_rx:
 		.if USE_I2C
@@ -3174,51 +3113,7 @@ clear_loop1:	cp	ZL, r0
 		.endif
 
 	; Check reset cause
-		bst	temp7, PORF		; Power-on reset
-		cpse	temp7, ZH		; or zero
-		brtc	init_no_porf
-		rcall	beep_f1			; Usual startup beeps
-		rcall	beep_f2
-		rcall	beep_f3
 		rjmp	control_start
-init_no_porf:
-		sbrs	temp7, BORF		; Brown-out reset
-		rjmp	init_no_borf
-		rcall	beep_f3			; "dead cellphone"
-		rcall	beep_f1
-		sbr	flags0, (1<<NO_CALIBRATION)
-		rjmp	control_start
-init_no_borf:
-		sbrs	temp7, EXTRF		; External reset
-		rjmp	init_no_extrf
-		rcall	beep_f4			; Single beep
-		rjmp	control_start
-init_no_extrf:
-		cli				; Disable interrupts for terminal reset causes
-
-		sbrs	temp7, WDRF		; Watchdog reset
-		rjmp	init_no_wdrf
-init_wdrf1:	rcall	beep_f1			; "siren"
-		rcall	beep_f1
-		rcall	beep_f3
-		rcall	beep_f3
-		rjmp	init_wdrf1		; Loop forever
-init_no_wdrf:
-
-	; Unknown reset cause: Beep out all 8 bits
-	; Sometimes I can cause this by touching the oscillator.
-init_bitbeep1:	rcall	wait240ms
-		mov	i_temp1, temp7
-		ldi	i_temp2, 8
-init_bitbeep2:	sbrs	i_temp1, 0
-		rcall	beep_f2
-		sbrc	i_temp1, 0
-		rcall	beep_f4
-		rcall	wait120ms
-		lsr	i_temp1
-		dec	i_temp2
-		brne	init_bitbeep2
-		rjmp	init_bitbeep1		; Loop forever
 
 .if BOOT_LOADER
 .include "boot.inc"

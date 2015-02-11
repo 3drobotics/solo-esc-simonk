@@ -184,7 +184,7 @@
 ; (stick high, stick low, (stick neutral) at start).
 ; These might be a bit wide for most radios, but lines up with POWER_RANGE.
 .equ	STOP_RC_PULS	= 1060	; Stop motor at or below this pulse length
-.equ	FULL_RC_PULS	= 1860	; Full speed at or above this pulse length
+.equ	FULL_RC_PULS	= 1990	; Full speed at or above this pulse length
 .equ	MAX_RC_PULS	= 2400	; Throw away any pulses longer than this
 .equ	MIN_RC_PULS	= 100	; Throw away any pulses shorter than this
 .equ	MID_RC_PULS	= (STOP_RC_PULS + FULL_RC_PULS) / 2	; Neutral when RC_PULS_REVERSE = 1

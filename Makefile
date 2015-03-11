@@ -24,6 +24,10 @@ test: all
 clean:
 	-rm -f $(ALL_TARGETS) *.obj *.eep.hex *.eeprom
 
+program_solo: all
+	avrdude -c avrispmkII -p m8 -U flash:w:bs_nfet.hex:i
+	avrdude -c avrispmkII -p m8 -U lfuse:w:0x3f:m -U hfuse:w:0xd7:m
+
 binary_zip: $(ALL_TARGETS)
 	TARGET="tgy_`date '+%Y-%m-%d'`_`git rev-parse --verify --short HEAD`.zip"; \
 	git archive -9 -o "$$TARGET" HEAD && \

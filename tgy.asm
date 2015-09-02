@@ -163,7 +163,7 @@
 .equ	MOTOR_REVERSE	= 0	; Reverse normal commutation direction
 .equ	RC_PULS_REVERSE	= 0	; Enable RC-car style forward/reverse throttle
 .equ	RC_CALIBRATION	= 0	; Support run-time calibration of min/max pulse lengths
-.equ	SLOW_THROTTLE	= 0	; Limit maximum throttle jump to try to prevent overcurrent
+.equ	SLOW_THROTTLE	= 1	; Limit maximum throttle jump to try to prevent overcurrent
 .equ	BEACON		= 0	; Beep periodically when RC signal is lost
 .if !defined(CHECK_HARDWARE)
 .equ	CHECK_HARDWARE	= 0	; Check for correct pin configuration, sense inputs, and functioning MOSFETs

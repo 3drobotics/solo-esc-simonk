@@ -1,0 +1,6 @@
+language: c
+sudo: required
+install:
+  - sudo apt-get install avra
+script:
+  - make all
